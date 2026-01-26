@@ -1,0 +1,3 @@
+# helm ignores
+helm/charts/ark-operator/charts
+helm/charts/ark-operator/Chart.lock

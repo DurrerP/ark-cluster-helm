@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/app-template-4.6.2/charts/other/app-template/values.schema.json
+
+# you can add any value from the helm library chart you want to override
+# https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# do with caution
+
+

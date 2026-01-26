@@ -1,0 +1,17 @@
+{{- include "bjw-s.common.loader.init" . }}
+
+{{/* Add hardcoded defaults here */}}
+{{- define "app-template.hardcodedValues" -}}
+{{ if not .Values.global.nameOverride }}
+global:
+  nameOverride: "{{ .Release.Name }}"
+{{ end }}
+
+
+
+{{- end }}
+{{/* end of hardcoded defaults */}}
+
+{{- $_ := mergeOverwrite .Values (include "app-template.hardcodedValues" . | fromYaml) -}}
+{{/* Render the templates */}}
+{{ include "bjw-s.common.loader.generate" . }}
