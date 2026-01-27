@@ -9,6 +9,9 @@ controllers:
     annotations: {}
     labels: {}
 
+    serviceAccount: 
+      name: "ark-sa"
+
     job:
       ttlSecondsAfterFinished: 1800
       backoffLimit: 3
@@ -56,6 +59,9 @@ controllers:
     labels: {}
     replicas: 1
     revisionHistoryLimit: 3
+
+    serviceAccount: 
+      name: "ark-sa"
 
     cronjob:
       suspend: false
@@ -112,6 +118,9 @@ controllers:
     labels: {}
     replicas: 1
     strategy: OnDelete
+
+    serviceAccount: 
+      name: "ark-sa"
 
     revisionHistoryLimit: 3
 

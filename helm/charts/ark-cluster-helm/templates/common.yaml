@@ -8,10 +8,15 @@ global:
 {{ end }}
 
 {{- include "app.pvcs" . }}
-
 {{- include "app.configsave" . }}
-
 {{- include "app.controllers" . }}
+{{- include "app.svc" . }}
+
+
+serviceAccount:
+  ark:
+    enabled: true
+    forceRename: "ark-sa"
 
 {{- end }}
 {{/* end of hardcoded defaults */}}
