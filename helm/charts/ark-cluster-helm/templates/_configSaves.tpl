@@ -17,7 +17,6 @@ persistence:
   {{- end }}
 
   # cluster shared pvc
-
   cluster:
     enabled: {{ $root.Values.arkClusterHelm.clusterStorage.enabled }}
       type: persistentVolumeClaim

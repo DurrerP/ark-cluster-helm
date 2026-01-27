@@ -10,10 +10,34 @@ global:
     kubernetes.io/hostname: "nodename"
 
 arkClusterHelm:
-  storage:
+
+  ##
+  # Storage
+  ##
+
+  # will create 2 PVCs for ark A and ark B installation
+  serverStorage:
     enabled: true
     storageClass: node3-local # define storage class here
     accessMode: ReadWriteOnce
     size: 50Gi
     retain: false
+  # will create a single PVC for cluster shared storage
+  clusterStorage:
+    enabled: true
+    storageClass: node3-local # define storage class here
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    retain: false
+
+
+  ##
+  # Configmaps / Secrets
+  ##
+
+  configMaps:
+    
+  secrets:
+    
+
 

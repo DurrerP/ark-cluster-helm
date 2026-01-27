@@ -1,3 +1,6 @@
 # helm ignores
-helm/charts/ark-operator/charts
-helm/charts/ark-operator/Chart.lock
+helm/charts/ark-cluster-helm/charts
+helm/charts/ark-cluster-helm/Chart.lock
+
+#other stuff
+helperScripts/secret.sh

@@ -2,6 +2,11 @@
 
 Simple helm chart to deploy an ark cluster based on values. Optimal for use in a gitOps based cluster.
 
+## important
+
+You have to create a configmap for ark-cluster-state manually if you're using ArgoCD (No idea about Flux) since Argo won't run 
+
+
 # Helm Chart app-template
 
 ![Version: 4.6.2](https://img.shields.io/badge/Version-4.6.2-informational?style=flat-square)
