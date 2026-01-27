@@ -5,3 +5,15 @@
 # do with caution
 
 
+global:
+  nodeSelector:
+    kubernetes.io/hostname: "nodename"
+
+arkClusterHelm:
+  storage:
+    enabled: true
+    storageClass: node3-local # define storage class here
+    accessMode: ReadWriteOnce
+    size: 50Gi
+    retain: false
+
