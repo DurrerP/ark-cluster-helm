@@ -9,6 +9,9 @@ global:
 
 {{- include "app.pvcs" . }}
 
+{{- include "app.configsave" . }}
+
+{{- include "app.controllers" . }}
 
 {{- end }}
 {{/* end of hardcoded defaults */}}

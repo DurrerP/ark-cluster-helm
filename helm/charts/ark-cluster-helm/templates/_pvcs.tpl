@@ -2,9 +2,8 @@
 {{- $root := . }}
 
 persistence:
-  {{- range tuple "arkA" "arkB" }}
-  
-  # ark A and ark B
+
+{{- range tuple "arkA" "arkB" }}
   {{ . }}:
     enabled: {{ $root.Values.arkClusterHelm.serverStorage.enabled }}
     type: persistentVolumeClaim
@@ -14,17 +13,15 @@ persistence:
     size: {{ $root.Values.arkClusterHelm.serverStorage.size }}
     retain: {{ $root.Values.arkClusterHelm.serverStorage.retain }}
 
-  {{- end }}
-
-  # cluster shared pvc
+{{- end }}
 
   cluster:
-    enabled: {{ $root.Values.arkClusterHelm.clusterStorage.enabled }}
-      type: persistentVolumeClaim
-      suffix: pvc
-      storageClass: {{ $root.Values.arkClusterHelm.clusterStorage.storageClass }}
-      accessMode: {{ $root.Values.arkClusterHelm.clusterStorage.accessMode }}
-      size: {{ $root.Values.arkClusterHelm.clusterStorage.size }}
-      retain: {{ $root.Values.arkClusterHelm.clusterStorage.retain }}
+    enabled: {{ .Values.arkClusterHelm.clusterStorage.enabled }}
+    type: persistentVolumeClaim
+    suffix: pvc
+    storageClass: {{ .Values.arkClusterHelm.clusterStorage.storageClass }}
+    accessMode: {{ .Values.arkClusterHelm.clusterStorage.accessMode }}
+    size: {{ .Values.arkClusterHelm.clusterStorage.size }}
+    retain: {{ .Values.arkClusterHelm.clusterStorage.retain }}
 
 {{- end }}
