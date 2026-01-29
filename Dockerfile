@@ -7,7 +7,7 @@ ENV ARK_PATH="/home/steam/ark"
 # env for PVCs
 ENV ARK_A="/mnt/arkA"
 ENV ARK_B="/mnt/arkB"
-ENV CLUSTER_DIR="/mnt/cluster"
+ENV ARK_CLUSTER_DIR="/mnt/cluster"
 ENV ARK_CONFIG_MAP="/mnt/configmap"
 
 # ProtonGE Version

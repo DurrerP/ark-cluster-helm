@@ -22,6 +22,7 @@ else
   TARGET_DRIVE="arkB"
 fi
 TARGET_PATH="/mnt/$TARGET_DRIVE"
+ACTIVE_PATH="/mnt/$ACTIVE_DRIVE"
 
 echo "[update] Active PVC: $ACTIVE_DRIVE"
 echo "[update] Updating inactive PVC: $TARGET_DRIVE ($TARGET_PATH)"
@@ -29,23 +30,31 @@ echo "[update] Updating inactive PVC: $TARGET_DRIVE ($TARGET_PATH)"
 # ----------------------------------------------------------------------
 # SteamCMD update
 # ----------------------------------------------------------------------
-ARK_SERVER_UPDATED=false
+MANIFEST="$TARGET_PATH/steamapps/appmanifest_${STEAM_APP_ID}.acf"
+
+get_buildid() {
+  awk -F\" '/"buildid"/ { print $4 }' "$MANIFEST" 2>/dev/null
+}
+
+BEFORE_BUILDID=$(get_buildid)
+
 echo "[update] Running SteamCMD update..."
-UPDATE_OUTPUT=$("$STEAM_PATH/steamcmd.sh" \
-  +@sSteamCmdForcePlatformType windows \
+"$STEAM_PATH/steamcmd.sh" \
   +force_install_dir "$TARGET_PATH" \
   +login anonymous \
-  +app_update "$ARK_APP_ID" validate \
-  +quit 2>&1
-)
-echo "$UPDATE_OUTPUT"
+  +app_update "$STEAM_APP_ID" validate \
+  +quit
 
-if ! echo "$UPDATE_OUTPUT" | grep -Eiq "already up to date|nothing to update"; then
-  echo "[update] SteamCMD update applied."
+AFTER_BUILDID=$(get_buildid)
+
+if [[ -n "$BEFORE_BUILDID" && "$BEFORE_BUILDID" != "$AFTER_BUILDID" ]]; then
+  echo "[update] Server updated ($BEFORE_BUILDID → $AFTER_BUILDID)"
   ARK_SERVER_UPDATED=true
 else
   echo "[update] No server update detected."
+  ARK_SERVER_UPDATED=false
 fi
+
 
 # ----------------------------------------------------------------------
 # Download mods
@@ -60,20 +69,50 @@ fi
 # ----------------------------------------------------------------------
 # Update ConfigMap only if updates were applied
 # ----------------------------------------------------------------------
-if [[ "$ARK_SERVER_UPDATED" == true || "${ARK_MODS_UPDATED:-false}" == true]]; then
+if [[ "$ARK_SERVER_UPDATED" == true || "${ARK_MODS_UPDATED:-false}" == true ]]; then
   echo "[update] Updates detected. Patching ConfigMap and restarting StatefulSets..."
-  
+
   if command -v kubectl >/dev/null 2>&1; then
+
+    # Patch ConfigMap
     kubectl patch configmap "$CONFIGMAP_NAME" \
       -n "$NAMESPACE" \
       --type merge \
       -p "{\"data\":{\"ARK_ACTIVE_PVC\":\"$TARGET_DRIVE\",\"ARK_LAST_UPDATETIME\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}}" \
       || echo "[update] WARNING: Failed to patch ConfigMap"
 
-    # Restart StatefulSets
-    for sts in $(kubectl get sts -n "$NAMESPACE" -o name); do
+    # Get StatefulSets once (deterministic order)
+    STS_LIST=$(kubectl get sts -n "$NAMESPACE" -o name | sort)
+
+    echo "[update] Restarting StatefulSets (2 min spacing)..."
+
+    # Phase 1: staggered parallel restarts
+    for sts in $STS_LIST; do
+      echo "[update] Triggering restart for $sts..."
       kubectl rollout restart "$sts" -n "$NAMESPACE"
+      sleep 120
     done
+
+    # Ensure all restart commands were issued
+    wait
+    echo "[update] All StatefulSet restarts triggered."
+
+    # Phase 2: wait for all rollouts AFTER last restart
+    echo "[update] Waiting up to 20 minutes for all StatefulSets to become ready..."
+    for sts in $STS_LIST; do
+      echo "[update] Waiting for rollout of $sts..."
+      kubectl rollout status "$sts" -n "$NAMESPACE" --timeout=20m \
+        || {
+          echo "[update] ERROR: Rollout of $sts failed or timed out."
+          exit 1
+        }
+    done
+
+    echo "[update] All StatefulSets ready. Running post-restart action..."
+    rsync -a --delete "$TARGET_PATH/" "$ACTIVE_PATH/"
+    echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Updating previous Active PVC done."
+
+
   else
     echo "[update] kubectl not found, skipping ConfigMap update and StatefulSet restarts."
   fi
@@ -81,4 +120,3 @@ else
   echo "[update] No updates detected (server or mods). ConfigMap not modified."
 fi
 
-echo "[update] Update process completed."

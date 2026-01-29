@@ -11,7 +11,7 @@ echo "[init] ARK_FORCE_INSTALL=${ARK_FORCE_INSTALL}"
 # -------------------------------------------------
 initialized=false
 
-for dir in "$ARK_A" "$ARK_B" "$CLUSTER_DIR"; do
+for dir in "$ARK_A" "$ARK_B" "$ARK_CLUSTER_DIR"; do
   if [ -d "$dir" ] && [ "$(ls -A "$dir" 2>/dev/null)" ]; then
     echo "[init] Existing data found in $dir"
     initialized=true
@@ -28,7 +28,7 @@ fi
 # -------------------------------------------------
 if [ "$initialized" = true ] && [ "$ARK_FORCE_INSTALL" = "true" ]; then
   echo "[init] ARK_FORCE_INSTALL enabled, wiping existing data"
-  rm -rf "${ARK_A:?}/"* "${ARK_B:?}/"* "${CLUSTER_DIR:?}/"*
+  rm -rf "${ARK_A:?}/"* "${ARK_B:?}/"* "${ARK_CLUSTER_DIR:?}/"*
 fi
 
 # -------------------------------------------------
@@ -37,7 +37,6 @@ fi
 echo "[init] Installing ASA Server (AppID: ${STEAM_APP_ID}) into ${ARK_A}"
 
 "${STEAM_PATH}/steamcmd.sh" \
-  +@sSteamCmdForcePlatformType windows \
   +force_install_dir "$ARK_A" \
   +login anonymous \
   +app_update "$STEAM_APP_ID" validate \
@@ -70,10 +69,10 @@ echo "[init] arkB successfully initialized"
 echo "[init] Initializing cluster directory"
 
 # ASA expects this to exist; contents will be populated at runtime
-mkdir -p "$CLUSTER_DIR"/{Saved,Config}
+mkdir -p "$ARK_CLUSTER_DIR"/{Saved,Config}
 
 # change to write to configMap
-echo "initialized=$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$CLUSTER_DIR/.initialized"
+echo "initialized=$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$ARK_CLUSTER_DIR/.initialized"
 
 echo "[init] Cluster directory ready"
 
