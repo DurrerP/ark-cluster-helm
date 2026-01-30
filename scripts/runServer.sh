@@ -55,7 +55,7 @@ trap 'graceful_shutdown' TERM
 # Environment validation & defaults
 # ----------------------------------------------------------------------
 : "${ARK_SERVER_MAP:=TheIsland_WP}"
-: "${SESSION_NAME:?SESSION_NAME must be set}"
+: "${ARK_SESSION_NAME:?ARK_SESSION_NAME must be set}"
 : "${ARK_SERVER_PORT:?ARK_SERVER_PORT must be set}"
 : "${ARK_SERVER_RCON_PORT:?ARK_SERVER_RCON_PORT must be set}"
 : "${ARK_SERVER_ADMIN_PASSWORD:?ARK_SERVER_ADMIN_PASSWORD must be set}"
@@ -69,6 +69,7 @@ trap 'graceful_shutdown' TERM
 # ln -s TARGET LINK_NAME
 
 # PVC Savegame
+mkdir -p /mnt/serverPVC/Saved
 ln -s /mnt/serverPVC/Saved $ARK_PATH/ShooterGame/Saved
 
 # steam files
@@ -130,13 +131,12 @@ SESSION_FORMAT="${ARK_SESSION_NAME:-'{cluster_id} ASA - {map_name}'}"
 SESSION_FORMAT="${SESSION_FORMAT//\{cluster_id\}/${ARK_CLUSTER_ID:-Cluster}}"
 SESSION_FORMAT="${SESSION_FORMAT//\{map_name\}/$ARK_SERVER_MAP}"
 update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "SessionName" "$SESSION_FORMAT"
-echo $SESSION_FORMAT
 
 # ----------------------------------------------------------------------
 # Move final config into Saved/Config
 # ----------------------------------------------------------------------
 CONFIG_DIR="${ARK_PATH}/ShooterGame/Saved/Config/WindowsServer"
-mkdir -p "$CONFIG_DIR"
+mkdir -p "$CONFIG_DIR/WindowsServer"
 mv -f "$TMP_CONFIG/Game.ini" "$CONFIG_DIR/Game.ini"
 mv -f "$TMP_CONFIG/GameUserSettings.ini" "$CONFIG_DIR/GameUserSettings.ini"
 
