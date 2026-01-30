@@ -123,7 +123,6 @@ update_ini() {
 }
 
 # Map global settings
-[[ -n "${ARK_ENABLE_BATTLE_EYE:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "bBattlEyeEnabled" "${ARK_ENABLE_BATTLE_EYE}"
 [[ -n "${ARK_MAX_PLAYERS:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "MaxPlayers" "${ARK_MAX_PLAYERS}"
 
 # Compute session name
@@ -131,6 +130,9 @@ SESSION_FORMAT="${ARK_SESSION_NAME:-'{cluster_id} ASA - {map_name}'}"
 SESSION_FORMAT="${SESSION_FORMAT//\{cluster_id\}/${ARK_CLUSTER_ID:-Cluster}}"
 SESSION_FORMAT="${SESSION_FORMAT//\{map_name\}/$ARK_SERVER_MAP}"
 update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "SessionName" "$SESSION_FORMAT"
+
+
+# TODO: ServerAdminPassword to config
 
 # ----------------------------------------------------------------------
 # Move final config into Saved/Config
@@ -143,21 +145,26 @@ mv -f "$TMP_CONFIG/GameUserSettings.ini" "$CONFIG_DIR/GameUserSettings.ini"
 # ----------------------------------------------------------------------
 # Build launch command from comma-separated opts and params
 # ----------------------------------------------------------------------
+
+# - Options
 SERVER_PARAMS=""
 IFS=',' read -ra OPTS <<< "${ARK_SERVER_OPTS:-}"
 for opt in "${OPTS[@]}"; do
-    SERVER_PARAMS="${SERVER_PARAMS}?${opt}"
+    SERVER_PARAMS="${SERVER_PARAMS} -${opt}"
 done
 
+# ? Options
 IFS=',' read -ra PARAMS <<< "${ARK_SERVER_PARAMS:-}"
 for param in "${PARAMS[@]}"; do
     SERVER_PARAMS="${SERVER_PARAMS}?${param}"
 done
 
-LAUNCH_COMMAND="${ARK_SERVER_MAP}?SessionName=${SESSION_FORMAT}?RCONEnabled=True?RCONPort=${ARK_SERVER_RCON_PORT}${SERVER_PARAMS}"
+# TODO: ADD Cluster Config params
+
+LAUNCH_COMMAND="${ARK_SERVER_MAP}${SERVER_PARAMS}?SessionName=${SESSION_FORMAT}?RCONEnabled=True?RCONPort=${ARK_SERVER_RCON_PORT}"
 # [[ -n "${ARK_MOD_IDS:-}" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND} -ARK_MOD_IDS=${ARK_MOD_IDS}"
-[[ -n "$ARK_SERVER_JOIN_PASSWORD" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND} ?ServerPassword=${ARK_SERVER_JOIN_PASSWORD}"
-LAUNCH_COMMAND="${LAUNCH_COMMAND}?ServerAdminPassword=${ARK_SERVER_ADMIN_PASSWORD}"
+[[ -n "$ARK_SERVER_JOIN_PASSWORD" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND}?ServerPassword=${ARK_SERVER_JOIN_PASSWORD}"
+
 
 
 
