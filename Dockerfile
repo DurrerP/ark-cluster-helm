@@ -64,6 +64,7 @@ RUN apt-get update \
         procps \
         winbind \
         dbus \
+        rsync \
         libfreetype6 \
     && echo 'LANG="en_US.UTF-8"' > /etc/default/locale \
     && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
@@ -88,8 +89,8 @@ RUN wget "$KUBECTL_URL" -O kubectl \
 COPY scripts/* /home/steam/
 RUN chown steam:steam /home/steam/*.sh \
     && chmod +x /home/steam/*.sh && \
-    mkdir -p /mnt/arkA /mnt/arkB /mnt/cluster /mnt/configmap \
-    && chown steam:steam /mnt/arkA /mnt/arkB /mnt/cluster /mnt/configmap
+    mkdir -p /mnt/arkA /mnt/arkB /mnt/cluster /mnt/configmap /mnt/serverPVC \
+    && chown steam:steam /mnt/arkA /mnt/arkB /mnt/cluster /mnt/configmap /mnt/serverPVC
 
 # all Installations as root done, switch to steam user
 
@@ -103,7 +104,7 @@ RUN mkdir -p Steam \
     && tar -xz -C "$STEAM_PATH/" -f "$STEAM_PATH/steamcmd.tar.gz" \
     && rm -rf "$STEAM_PATH/steamcmd.tar.gz" \
     && mkdir -p "$ARK_PATH" \
-    && mkdir -p "${ARK_PATH}/ShooterGame/Saved" \
+    && mkdir -p "${ARK_PATH}/ShooterGame" \
     && mkdir -p "${STEAM_PATH}/compatibilitytools.d" \
     && mkdir -p "${STEAM_PATH}/steamapps/compatdata/${STEAM_APP_ID}" \
     && mkdir -p "${HOME}/.steam" \

@@ -58,15 +58,34 @@ trap 'graceful_shutdown' TERM
 : "${SESSION_NAME:?SESSION_NAME must be set}"
 : "${ARK_SERVER_PORT:?ARK_SERVER_PORT must be set}"
 : "${ARK_SERVER_RCON_PORT:?ARK_SERVER_RCON_PORT must be set}"
-SERVER_PASSWORD="${ARK_SERVER_JOIN_PASSWORD:-}"
-SERVER_ADMIN_PASSWORD="${ARK_SERVER_ADMIN_PASSWORD:?ARK_SERVER_ADMIN_PASSWORD must be set}"
+: "${ARK_SERVER_ADMIN_PASSWORD:?ARK_SERVER_ADMIN_PASSWORD must be set}"
+
 
 # ----------------------------------------------------------------------
-# Ensure Saved folder exists (dedicated server PVC)
+# Create necessary Symlinks
 # ----------------------------------------------------------------------
-ARK_PATH_SAVED="${ARK_PATH}/ShooterGame/Saved"
-mkdir -p "$ARK_PATH_SAVED"
-echo "$(timestamp) INFO: Using dedicated Saved PVC mounted at $ARK_PATH_SAVED"
+
+# ARK_ACTIVE_PVC
+# ln -s TARGET LINK_NAME
+
+# PVC Savegame
+ln -s /mnt/serverPVC/Saved $ARK_PATH/ShooterGame/Saved
+
+# steam files
+ln -s /mnt/$ARK_ACTIVE_PVC/libsteamwebrtc.so $ARK_PATH/libsteamwebrtc.so
+ln -s /mnt/$ARK_ACTIVE_PVC/steamclient.so $ARK_PATH/steamclient.so
+
+# base folders
+ln -s /mnt/$ARK_ACTIVE_PVC/Engine $ARK_PATH/Engine
+# ln -s /mnt/$ARK_ACTIVE_PVC/linux64 $ARK_PATH/linux64
+# ln -s /mnt/$ARK_ACTIVE_PVC/steamapps $ARK_PATH/steamapps
+
+# shooterGame folders
+ln -s /mnt/$ARK_ACTIVE_PVC/ShooterGame/Binaries $ARK_PATH/ShooterGame/Binaries
+ln -s /mnt/$ARK_ACTIVE_PVC/ShooterGame/Content $ARK_PATH/ShooterGame/Content
+ln -s /mnt/$ARK_ACTIVE_PVC/ShooterGame/Plugins $ARK_PATH/ShooterGame/Plugins
+
+
 
 # ----------------------------------------------------------------------
 # Config preparation
@@ -107,18 +126,19 @@ update_ini() {
 [[ -n "${ARK_MAX_PLAYERS:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "MaxPlayers" "${ARK_MAX_PLAYERS}"
 
 # Compute session name
-SESSION_FORMAT="${ARK_SESSION_NAME_FORMAT:-'{cluster_id} ASA - {map_name}'}"
+SESSION_FORMAT="${ARK_SESSION_NAME:-'{cluster_id} ASA - {map_name}'}"
 SESSION_FORMAT="${SESSION_FORMAT//\{cluster_id\}/${ARK_CLUSTER_ID:-Cluster}}"
 SESSION_FORMAT="${SESSION_FORMAT//\{map_name\}/$ARK_SERVER_MAP}"
 update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "SessionName" "$SESSION_FORMAT"
+echo $SESSION_FORMAT
 
 # ----------------------------------------------------------------------
 # Move final config into Saved/Config
 # ----------------------------------------------------------------------
 CONFIG_DIR="${ARK_PATH}/ShooterGame/Saved/Config/WindowsServer"
 mkdir -p "$CONFIG_DIR"
-mv "$TMP_CONFIG/Game.ini" "$CONFIG_DIR/Game.ini"
-mv "$TMP_CONFIG/GameUserSettings.ini" "$CONFIG_DIR/GameUserSettings.ini"
+mv -f "$TMP_CONFIG/Game.ini" "$CONFIG_DIR/Game.ini"
+mv -f "$TMP_CONFIG/GameUserSettings.ini" "$CONFIG_DIR/GameUserSettings.ini"
 
 # ----------------------------------------------------------------------
 # Build launch command from comma-separated opts and params
@@ -135,10 +155,11 @@ for param in "${PARAMS[@]}"; do
 done
 
 LAUNCH_COMMAND="${ARK_SERVER_MAP}?SessionName=${SESSION_FORMAT}?RCONEnabled=True?RCONPort=${ARK_SERVER_RCON_PORT}${SERVER_PARAMS}"
-[[ -n "$SERVER_PASSWORD" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND}?ServerPassword=${SERVER_PASSWORD}"
-LAUNCH_COMMAND="${LAUNCH_COMMAND}?ServerAdminPassword=${SERVER_ADMIN_PASSWORD}"
-[[ -n "${EXTRA_FLAGS:-}" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND} ${EXTRA_FLAGS}"
-[[ -n "${MODS:-}" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND} -mods=${MODS}"
+# [[ -n "${ARK_MOD_IDS:-}" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND} -ARK_MOD_IDS=${ARK_MOD_IDS}"
+[[ -n "$ARK_SERVER_JOIN_PASSWORD" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND} ?ServerPassword=${ARK_SERVER_JOIN_PASSWORD}"
+LAUNCH_COMMAND="${LAUNCH_COMMAND}?ServerAdminPassword=${ARK_SERVER_ADMIN_PASSWORD}"
+
+
 
 # ----------------------------------------------------------------------
 # Print ASCII banner
@@ -173,7 +194,7 @@ echo "Server Password: ${ARK_SERVER_JOIN_PASSWORD}"
 echo "Map: $ARK_SERVER_MAP"
 echo "Game Port: $ARK_SERVER_PORT"
 echo "RCON Port: $ARK_SERVER_RCON_PORT"
-echo "Mods: ${MODS:-none}"
+echo "ARK_MOD_IDS: ${ARK_MOD_IDS:-none}"
 echo "Extra Params: ${SERVER_PARAMS}"
 echo ""
 
