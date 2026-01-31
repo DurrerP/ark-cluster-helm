@@ -125,6 +125,8 @@ update_ini() {
 # Map global settings
 [[ -n "${ARK_MAX_PLAYERS:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "MaxPlayers" "${ARK_MAX_PLAYERS}"
 
+
+
 # Compute session name
 SESSION_FORMAT="${ARK_SESSION_NAME:-'{cluster_id} ASA - {map_name}'}"
 SESSION_FORMAT="${SESSION_FORMAT//\{cluster_id\}/${ARK_CLUSTER_ID:-Cluster}}"
@@ -146,18 +148,22 @@ mv -f "$TMP_CONFIG/GameUserSettings.ini" "$CONFIG_DIR/GameUserSettings.ini"
 # Build launch command from comma-separated opts and params
 # ----------------------------------------------------------------------
 
-# - Options
 SERVER_PARAMS=""
-IFS=',' read -ra OPTS <<< "${ARK_SERVER_OPTS:-}"
-for opt in "${OPTS[@]}"; do
-    SERVER_PARAMS="${SERVER_PARAMS} -${opt}"
-done
+SERVER_OPTS=""
 
 # ? Options
 IFS=',' read -ra PARAMS <<< "${ARK_SERVER_PARAMS:-}"
 for param in "${PARAMS[@]}"; do
     SERVER_PARAMS="${SERVER_PARAMS}?${param}"
 done
+
+# - Options
+IFS=',' read -ra OPTS <<< "${ARK_SERVER_OPTS:-}"
+for opt in "${OPTS[@]}"; do
+    SERVER_OPTS="${SERVER_OPTS} -${opt}"
+done
+
+
 
 # TODO: ADD Cluster Config params
 
