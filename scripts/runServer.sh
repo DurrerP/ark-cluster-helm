@@ -15,32 +15,32 @@ broadcast_shutdown_timer() {
     echo "$(timestamp) INFO: Initiating shutdown sequence for $total_minutes minute(s)"
     
     while [[ $remaining -gt 0 ]]; do
-        rcon -a 127.0.0.1:"${ARK_SERVER_RCON_PORT}" -p "${ARK_SERVER_RCON_PASSWORD}" Broadcast "Server shutting down in $remaining minute(s)"
+        rcon -a 127.0.0.1:27020 -p "${ARK_SERVER_ADMIN_PASSWORD}" Broadcast "Server shutting down in $remaining minute(s)"
         sleep 60
         ((remaining--))
     done
 
     # 1-minute final countdown messages in 15s intervals
-    rcon -a 127.0.0.1:"${ARK_SERVER_RCON_PORT}" -p "${ARK_SERVER_RCON_PASSWORD}" Broadcast "Server shutting down in 60 seconds"
+    rcon -a 127.0.0.1:27020 -p "${ARK_SERVER_ADMIN_PASSWORD}" Broadcast "Server shutting down in 60 seconds"
     sleep 30
-    rcon -a 127.0.0.1:"${ARK_SERVER_RCON_PORT}" -p "${ARK_SERVER_RCON_PASSWORD}" Broadcast "Server shutting down in 30 seconds"
+    rcon -a 127.0.0.1:27020 -p "${ARK_SERVER_ADMIN_PASSWORD}" Broadcast "Server shutting down in 30 seconds"
     sleep 30
 }
 
 graceful_shutdown() {
     echo "$(timestamp) INFO: SIGTERM received, performing graceful shutdown"
     echo "$(timestamp) INFO: Saving world..."
-    rcon -a 127.0.0.1:"${ARK_SERVER_RCON_PORT}" -p "${ARK_SERVER_RCON_PASSWORD}" SafeWorld
+    rcon -a 127.0.0.1:27020 -p "${ARK_SERVER_ADMIN_PASSWORD}" SafeWorld
 
     broadcast_shutdown_timer 5
 
     echo "$(timestamp) INFO: Final SafeWorld and exiting..."
-    rcon -a 127.0.0.1:"${ARK_SERVER_RCON_PORT}" -p "${ARK_SERVER_RCON_PASSWORD}" SafeWorld
-    rcon -a 127.0.0.1:"${ARK_SERVER_RCON_PORT}" -p "${ARK_SERVER_RCON_PASSWORD}" DoExit
+    rcon -a 127.0.0.1:27020 -p "${ARK_SERVER_ADMIN_PASSWORD}" SafeWorld
+    rcon -a 127.0.0.1:27020 -p "${ARK_SERVER_ADMIN_PASSWORD}" DoExit
 
     # Wait for port to close
     timeout=60
-    while netstat -aln | grep -q "$ARK_SERVER_PORT" && [[ $timeout -gt 0 ]]; do
+    while netstat -aln | grep -q "$7777" && [[ $timeout -gt 0 ]]; do
         sleep 1
         ((timeout--))
     done
@@ -55,9 +55,6 @@ trap 'graceful_shutdown' TERM
 # Environment validation & defaults
 # ----------------------------------------------------------------------
 : "${ARK_SERVER_MAP:=TheIsland_WP}"
-: "${ARK_SESSION_NAME:?ARK_SESSION_NAME must be set}"
-: "${ARK_SERVER_PORT:?ARK_SERVER_PORT must be set}"
-: "${ARK_SERVER_RCON_PORT:?ARK_SERVER_RCON_PORT must be set}"
 : "${ARK_SERVER_ADMIN_PASSWORD:?ARK_SERVER_ADMIN_PASSWORD must be set}"
 
 
@@ -70,21 +67,22 @@ trap 'graceful_shutdown' TERM
 
 # PVC Savegame
 mkdir -p /mnt/serverPVC/Saved
-ln -s /mnt/serverPVC/Saved $ARK_PATH/ShooterGame/Saved
+ln -sf /mnt/serverPVC/Saved $ARK_PATH/ShooterGame/Saved
 
 # steam files
-ln -s /mnt/$ARK_ACTIVE_PVC/libsteamwebrtc.so $ARK_PATH/libsteamwebrtc.so
-ln -s /mnt/$ARK_ACTIVE_PVC/steamclient.so $ARK_PATH/steamclient.so
+ln -sf /mnt/$ARK_ACTIVE_PVC/libsteamwebrtc.so $ARK_PATH/libsteamwebrtc.so
+ln -sf /mnt/$ARK_ACTIVE_PVC/steamclient.so $ARK_PATH/steamclient.so
 
 # base folders
-ln -s /mnt/$ARK_ACTIVE_PVC/Engine $ARK_PATH/Engine
+ln -sf /mnt/$ARK_ACTIVE_PVC/Engine $ARK_PATH/Engine
 # ln -s /mnt/$ARK_ACTIVE_PVC/linux64 $ARK_PATH/linux64
 # ln -s /mnt/$ARK_ACTIVE_PVC/steamapps $ARK_PATH/steamapps
 
 # shooterGame folders
-ln -s /mnt/$ARK_ACTIVE_PVC/ShooterGame/Binaries $ARK_PATH/ShooterGame/Binaries
-ln -s /mnt/$ARK_ACTIVE_PVC/ShooterGame/Content $ARK_PATH/ShooterGame/Content
-ln -s /mnt/$ARK_ACTIVE_PVC/ShooterGame/Plugins $ARK_PATH/ShooterGame/Plugins
+ln -sf /mnt/$ARK_ACTIVE_PVC/ShooterGame/Binaries $ARK_PATH/ShooterGame/Binaries
+ln -sf /mnt/$ARK_ACTIVE_PVC/ShooterGame/Mods $ARK_PATH/ShooterGame/Mods
+ln -sf /mnt/$ARK_ACTIVE_PVC/ShooterGame/Content $ARK_PATH/ShooterGame/Content
+ln -sf /mnt/$ARK_ACTIVE_PVC/ShooterGame/Plugins $ARK_PATH/ShooterGame/Plugins
 
 
 
@@ -123,7 +121,19 @@ update_ini() {
 }
 
 # Map global settings
+
+# set max players
 [[ -n "${ARK_MAX_PLAYERS:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "MaxPlayers" "${ARK_MAX_PLAYERS}"
+
+# set admin password
+[[ -n "${ARK_SERVER_ADMIN_PASSWORD:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "ServerAdminPassword" "${ARK_SERVER_ADMIN_PASSWORD}"
+
+# enable RCON
+[[ -n "${ARK_SERVER_RCON_PASSWORD:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "RCONEnabled" "true"
+[[ -n "${ARK_SERVER_RCON_PASSWORD:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "RCONPort" "27020"
+
+# active mods
+[[ -n "${ARK_SERVER_RCON_PASSWORD:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "ActiveMods" "${ARK_MOD_IDS}"
 
 
 
@@ -131,7 +141,7 @@ update_ini() {
 SESSION_FORMAT="${ARK_SESSION_NAME:-'{cluster_id} ASA - {map_name}'}"
 SESSION_FORMAT="${SESSION_FORMAT//\{cluster_id\}/${ARK_CLUSTER_ID:-Cluster}}"
 SESSION_FORMAT="${SESSION_FORMAT//\{map_name\}/$ARK_SERVER_MAP}"
-update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "SessionName" "$SESSION_FORMAT"
+update_ini "$TMP_CONFIG/GameUserSettings.ini" "SessionSettings" "SessionName" "$SESSION_FORMAT"
 
 
 # TODO: ServerAdminPassword to config
@@ -140,7 +150,7 @@ update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "SessionName" "$S
 # Move final config into Saved/Config
 # ----------------------------------------------------------------------
 CONFIG_DIR="${ARK_PATH}/ShooterGame/Saved/Config/WindowsServer"
-mkdir -p "$CONFIG_DIR/WindowsServer"
+mkdir -p "$CONFIG_DIR"
 mv -f "$TMP_CONFIG/Game.ini" "$CONFIG_DIR/Game.ini"
 mv -f "$TMP_CONFIG/GameUserSettings.ini" "$CONFIG_DIR/GameUserSettings.ini"
 
@@ -152,25 +162,56 @@ SERVER_PARAMS=""
 SERVER_OPTS=""
 
 # ? Options
+SERVER_PARAMS="${SERVER_PARAMS}?listen"
+[[ -n "$ARK_SERVER_JOIN_PASSWORD" ]] && SERVER_PARAMS="${SERVER_PARAMS}?ServerPassword=${ARK_SERVER_JOIN_PASSWORD}"
 IFS=',' read -ra PARAMS <<< "${ARK_SERVER_PARAMS:-}"
 for param in "${PARAMS[@]}"; do
-    SERVER_PARAMS="${SERVER_PARAMS}?${param}"
+    if [ "$param" != "null" ]; then
+        SERVER_PARAMS="${SERVER_PARAMS}?${param}"
+    fi
 done
 
 # - Options
+SERVER_OPTS="${SERVER_OPTS} -clusterid=${ARK_CLUSTER_ID}"
+SERVER_OPTS="${SERVER_OPTS} -ClusterDirOverride=${ARK_CLUSTER_DIR}"
+
 IFS=',' read -ra OPTS <<< "${ARK_SERVER_OPTS:-}"
 for opt in "${OPTS[@]}"; do
-    SERVER_OPTS="${SERVER_OPTS} -${opt}"
+    if [ "$opt" != "null" ]; then
+        SERVER_OPTS="${SERVER_OPTS} -${opt}"
+    fi
 done
+[[ -n "$ARK_MOD_IDS" ]] && SERVER_OPTS="${SERVER_OPTS} -mods=${ARK_MOD_IDS}"
 
 
 
 # TODO: ADD Cluster Config params
 
-LAUNCH_COMMAND="${ARK_SERVER_MAP}${SERVER_PARAMS}?SessionName=${SESSION_FORMAT}?RCONEnabled=True?RCONPort=${ARK_SERVER_RCON_PORT}"
-# [[ -n "${ARK_MOD_IDS:-}" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND} -ARK_MOD_IDS=${ARK_MOD_IDS}"
-[[ -n "$ARK_SERVER_JOIN_PASSWORD" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND}?ServerPassword=${ARK_SERVER_JOIN_PASSWORD}"
+# run - first
+# LAUNCH_COMMAND="${SERVER_OPTS} ${ARK_SERVER_MAP}${SERVER_PARAMS}"
+# [[ -n "$ARK_SERVER_JOIN_PASSWORD" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND}?ServerPassword=${ARK_SERVER_JOIN_PASSWORD}"
 
+# run ? first
+LAUNCH_COMMAND="${ARK_SERVER_MAP}${SERVER_PARAMS}"
+#[[ -n "$ARK_SERVER_JOIN_PASSWORD" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND}?ServerPassword=${ARK_SERVER_JOIN_PASSWORD}"
+LAUNCH_COMMAND="${LAUNCH_COMMAND}${SERVER_OPTS}"
+
+
+# LAUNCH_COMMAND="${ARK_SERVER_MAP}${SERVER_PARAMS}${SERVER_OPTS}"
+# [[ -n "${ARK_MOD_IDS:-}" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND} -ARK_MOD_IDS=${ARK_MOD_IDS}"
+# [[ -n "$ARK_SERVER_JOIN_PASSWORD" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND}?ServerPassword=${ARK_SERVER_JOIN_PASSWORD}"
+
+
+# Prepare Proton Prefix:
+# Add to docker compose
+# ARK_PREFIX="${STEAM_PATH}/steamapps/compatdata/${STEAM_APP_ID}"
+# if [ ! -d "$ARK_PREFIX/pfx" ]; then
+#     DEFAULT_PREFIX="${STEAM_COMPAT_CLIENT_INSTALL_PATH}/compatibilitytools.d/GE-Proton${GE_PROTON_VERSION}/files/share/default_pfx"
+#     cp -r "${DEFAULT_PREFIX}/." "$ARK_PREFIX/" || {
+#         echo -e "${RED}Error copying default_pfx!${RESET}"
+#         exit 1
+#     }
+# fi
 
 
 
@@ -205,9 +246,10 @@ echo "-----------------------------------------------------------"
 echo "Session: $SESSION_FORMAT"
 echo "Server Password: ${ARK_SERVER_JOIN_PASSWORD}"
 echo "Map: $ARK_SERVER_MAP"
-echo "Game Port: $ARK_SERVER_PORT"
-echo "RCON Port: $ARK_SERVER_RCON_PORT"
+echo "Game Port: 7777"
+echo "RCON Port: 27015"
 echo "ARK_MOD_IDS: ${ARK_MOD_IDS:-none}"
+echo "Extra Opts: ${SERVER_OPTS}"
 echo "Extra Params: ${SERVER_PARAMS}"
 echo ""
 
@@ -215,8 +257,27 @@ echo ""
 # ----------------------------------------------------------------------
 # Launch server via Proton
 # ----------------------------------------------------------------------
+
+# some proton flags
+export PROTON_NO_FSYNC=1
+export PROTON_NO_ESYNC=1
+
+echo "launching with"
+echo "${LAUNCH_COMMAND}"
 echo "$(timestamp) INFO: Starting ARK:SA..."
 "${STEAM_PATH}/compatibilitytools.d/GE-Proton${GE_PROTON_VERSION}/proton" run "${ARK_PATH}/ShooterGame/Binaries/Win64/ArkAscendedServer.exe" $LAUNCH_COMMAND &
 
+
+# echo "${STEAM_PATH}/compatibilitytools.d/GE-Proton${GE_PROTON_VERSION}/proton" run "${ARK_PATH}/ShooterGame/Binaries/Win64/ArkAscendedServer.exe" "${ARK_SERVER_MAP}${SERVER_PARAMS}" ${SERVER_OPTS}
+# "${STEAM_PATH}/compatibilitytools.d/GE-Proton${GE_PROTON_VERSION}/proton" run "${ARK_PATH}/ShooterGame/Binaries/Win64/ArkAscendedServer.exe" "${ARK_SERVER_MAP}${SERVER_PARAMS}" ${SERVER_OPTS}
+
+# /home/steam/Steam/compatibilitytools.d/GE-Proton10-29/proton run /home/steam/ark/ShooterGame/Binaries/Win64/ArkAscendedServer.exe TheIsland_WP?listen?serverPVE -clusterid=JumpySloths -ClusterDirOverride=/mnt/cluster -ForceAllowCaveFlyers -GBUsageToForceRestart=22 -forceuseperfthreads -ServerUseEventColors -NoBattleEye
+
 asa_pid=$!
 wait "$asa_pid"
+
+# reverent_chebyshev
+# 172.17.0.2
+# pidof ptyhon3
+# ls -lah ark/ShooterGame/Saved/Logs
+# cat ark/ShooterGame/Saved/Logs/ShooterGame.log

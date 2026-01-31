@@ -11,7 +11,7 @@ ENV ARK_CLUSTER_DIR="/mnt/cluster"
 ENV ARK_CONFIG_MAP="/mnt/configmap"
 
 # ProtonGE Version
-ENV GE_PROTON_VERSION="9-11"
+ENV GE_PROTON_VERSION="10-29"
 ENV GE_PROTON_URL="https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton${GE_PROTON_VERSION}/GE-Proton${GE_PROTON_VERSION}.tar.gz"
 
 # rcon-cli Version
@@ -31,6 +31,7 @@ ENV HOME="/home/steam"
 ENV STEAM_PATH="/home/steam/Steam"
 ENV STEAM_COMPAT_CLIENT_INSTALL_PATH="${STEAM_PATH}"
 ENV STEAM_COMPAT_DATA_PATH="${STEAM_PATH}/steamapps/compatdata/${STEAM_APP_ID}"
+# ENV STEAM_COMPAT_APP_ID="2430930"
 
 # fix some prompts
 ENV DEBIAN_FRONTEND=noninteractive
@@ -107,8 +108,11 @@ RUN mkdir -p Steam \
     && mkdir -p "${ARK_PATH}/ShooterGame" \
     && mkdir -p "${STEAM_PATH}/compatibilitytools.d" \
     && mkdir -p "${STEAM_PATH}/steamapps/compatdata/${STEAM_APP_ID}" \
-    && mkdir -p "${HOME}/.steam" \
-    && ${STEAM_PATH}/steamcmd.sh +quit 
+    && mkdir -p "${HOME}/.steam/sdk64" \
+    && mkdir -p "${HOME}/.steam/sdk32" \
+    && ${STEAM_PATH}/steamcmd.sh +quit \
+    && ln -sf /home/steam/Steam/linux64/steamclient.so /home/steam/.steam/sdk64/steamclient.so \
+    && ln -sf /home/steam/Steam/linux32/steamclient.so /home/steam/.steam/sdk32/steamclient.so
 
 
 # install proton-ge

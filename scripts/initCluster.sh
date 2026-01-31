@@ -42,6 +42,11 @@ echo "[init] Installing ASA Server (AppID: ${STEAM_APP_ID}) into ${ARK_A}"
   +app_update "$STEAM_APP_ID" validate \
   +quit
 
+# ToDO
+# if output: 
+# ERROR! Failed to install app '2430930' (Missing configuration)
+# retry
+
 echo "[init] ASA installation complete"
 
 # -------------------------------------------------
