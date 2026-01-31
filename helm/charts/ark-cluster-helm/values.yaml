@@ -39,19 +39,18 @@ arkClusterHelm:
       accessMode: ReadWriteOnce
       persist: false
     gamePortStart: 7777
-    rconPortStart: 27010
+    rconPortStart: 27015
     resources:
       requests:
-        cpu: 4.0
+        cpu: 2.0
         memory: 10Gi
 
   ##
-  # Loadbalancer
+  # Loadbalancers
   ##
 
   service:
     annotations: []
-      # loadBalancerIP: 192.168.1.2 # optional set static LB IP
 
   ##
   # Storage
@@ -140,7 +139,6 @@ secrets:
     stringData:
       ARK_SERVER_ADMIN_PASSWORD: password
       ARK_SERVER_JOIN_PASSWORD: password
-      ARK_SERVER_RCON_PASSWORD: password
       ARK_CURSEFORGE_API_KEY: api-key # (for downloading mods)
 
 

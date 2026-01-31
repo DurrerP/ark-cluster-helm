@@ -75,7 +75,7 @@ controllers:
 
 
     containers:
-      initJob:
+      updateJob:
         nameOverride: "ark_update_job"
 
         image:
@@ -126,11 +126,11 @@ controllers:
 
     statefulset:
       volumeClaimTemplates: 
-      - name: savedData
+      - name: serverPVC
         labels: {}
         annotations: {}
         globalMounts:
-          - path: /mnt/saved
+          - path: /mnt/serverPVC
         accessMode: {{ $root.Values.arkClusterHelm.servers.persistence.accessMode }}
         size: {{ $root.Values.arkClusterHelm.servers.persistence.size }}
         storageClass: {{ $root.Values.arkClusterHelm.servers.persistence.storageClass }}

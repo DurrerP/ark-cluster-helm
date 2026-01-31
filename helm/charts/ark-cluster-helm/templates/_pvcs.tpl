@@ -12,6 +12,24 @@ persistence:
     accessMode: {{ $root.Values.arkClusterHelm.serverStorage.accessMode }}
     size: {{ $root.Values.arkClusterHelm.serverStorage.size }}
     retain: {{ $root.Values.arkClusterHelm.serverStorage.retain }}
+    advancedMounts:
+      init_job:
+        initJob:
+          - path: "/mnt/{{ . }}"
+            readonly: false
+      update_job:
+        updateJob:
+          - path: "/mnt/{{ . }}"
+            readonly: false
+    {{- $currentPVC := . -}}
+    {{- $mapStart := 1 }}
+    {{- range $root.Values.arkClusterHelm.servers.maps  }}
+      ark{{ $mapStart }}:
+        main:
+          - path: "/mnt/{{ $currentPVC }}"
+            readonly: true
+    {{- $mapStart = add $mapStart 1 -}}
+    {{- end }}
 
 {{- end }}
 
@@ -23,5 +41,15 @@ persistence:
     accessMode: {{ .Values.arkClusterHelm.clusterStorage.accessMode }}
     size: {{ .Values.arkClusterHelm.clusterStorage.size }}
     retain: {{ .Values.arkClusterHelm.clusterStorage.retain }}
+    globalMounts:
+      - path: "/mnt/cluster"
+
+  clusterState:
+    enabled: true
+    type: configMap
+    name: "ark-global-configfiles"
+    globalMounts:
+      - path: "/mnt/configmap"
+
 
 {{- end }}

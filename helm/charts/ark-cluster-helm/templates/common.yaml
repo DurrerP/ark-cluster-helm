@@ -8,10 +8,14 @@ global:
 {{ end }}
 
 {{- include "app.pvcs" . }}
+
 {{- include "app.configsave" . }}
+
 {{- include "app.controllers" . }}
+
 {{- include "app.svc" . }}
 
+{{- include "app.rbacs" . }}
 
 serviceAccount:
   ark:
