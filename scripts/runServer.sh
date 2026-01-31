@@ -80,7 +80,13 @@ ln -sf /mnt/$ARK_ACTIVE_PVC/Engine $ARK_PATH/Engine
 
 # shooterGame folders
 ln -sf /mnt/$ARK_ACTIVE_PVC/ShooterGame/Binaries $ARK_PATH/ShooterGame/Binaries
-ln -sf /mnt/$ARK_ACTIVE_PVC/ShooterGame/Mods $ARK_PATH/ShooterGame/Mods
+
+# TODO Not sure wich one is correct
+# ln -sf /mnt/$ARK_ACTIVE_PVC/ShooterGame/Mods $ARK_PATH/ShooterGame/Mods
+ln -sf /mnt/$ARK_ACTIVE_PVC/ShooterGame/Mods $ARK_PATH/ShooterGame/Binaries/Win64/ShooterGame/Mods
+
+#ln -sf /mnt/$ARK_ACTIVE_PVC/ShooterGame/Content/Mods $ARK_PATH/ShooterGame/Binaries/Win64/ShooterGame/Mods
+
 ln -sf /mnt/$ARK_ACTIVE_PVC/ShooterGame/Content $ARK_PATH/ShooterGame/Content
 ln -sf /mnt/$ARK_ACTIVE_PVC/ShooterGame/Plugins $ARK_PATH/ShooterGame/Plugins
 
@@ -129,11 +135,11 @@ update_ini() {
 [[ -n "${ARK_SERVER_ADMIN_PASSWORD:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "ServerAdminPassword" "${ARK_SERVER_ADMIN_PASSWORD}"
 
 # enable RCON
-[[ -n "${ARK_SERVER_RCON_PASSWORD:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "RCONEnabled" "true"
-[[ -n "${ARK_SERVER_RCON_PASSWORD:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "RCONPort" "27020"
+[[ -n "${ARK_SERVER_ADMIN_PASSWORD:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "RCONEnabled" "true"
+[[ -n "${ARK_SERVER_ADMIN_PASSWORD:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "RCONPort" "27020"
 
 # active mods
-[[ -n "${ARK_SERVER_RCON_PASSWORD:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "ActiveMods" "${ARK_MOD_IDS}"
+[[ -n "${ARK_MOD_IDS:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "ActiveMods" "${ARK_MOD_IDS}"
 
 
 
