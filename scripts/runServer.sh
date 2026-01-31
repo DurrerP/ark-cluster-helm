@@ -129,7 +129,7 @@ update_ini() {
 # Map global settings
 
 # set max players
-[[ -n "${ARK_MAX_PLAYERS:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "MaxPlayers" "${ARK_MAX_PLAYERS}"
+[[ -n "${ARK_MAX_PLAYERS:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "/Script/Engine.GameSession" "MaxPlayers" "${ARK_MAX_PLAYERS}"
 
 # set admin password
 [[ -n "${ARK_SERVER_ADMIN_PASSWORD:-}" ]] && update_ini "$TMP_CONFIG/GameUserSettings.ini" "ServerSettings" "ServerAdminPassword" "${ARK_SERVER_ADMIN_PASSWORD}"
@@ -191,33 +191,8 @@ done
 
 
 
-# TODO: ADD Cluster Config params
-
-# run - first
-# LAUNCH_COMMAND="${SERVER_OPTS} ${ARK_SERVER_MAP}${SERVER_PARAMS}"
-# [[ -n "$ARK_SERVER_JOIN_PASSWORD" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND}?ServerPassword=${ARK_SERVER_JOIN_PASSWORD}"
-
-# run ? first
 LAUNCH_COMMAND="${ARK_SERVER_MAP}${SERVER_PARAMS}"
-#[[ -n "$ARK_SERVER_JOIN_PASSWORD" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND}?ServerPassword=${ARK_SERVER_JOIN_PASSWORD}"
 LAUNCH_COMMAND="${LAUNCH_COMMAND}${SERVER_OPTS}"
-
-
-# LAUNCH_COMMAND="${ARK_SERVER_MAP}${SERVER_PARAMS}${SERVER_OPTS}"
-# [[ -n "${ARK_MOD_IDS:-}" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND} -ARK_MOD_IDS=${ARK_MOD_IDS}"
-# [[ -n "$ARK_SERVER_JOIN_PASSWORD" ]] && LAUNCH_COMMAND="${LAUNCH_COMMAND}?ServerPassword=${ARK_SERVER_JOIN_PASSWORD}"
-
-
-# Prepare Proton Prefix:
-# Add to docker compose
-# ARK_PREFIX="${STEAM_PATH}/steamapps/compatdata/${STEAM_APP_ID}"
-# if [ ! -d "$ARK_PREFIX/pfx" ]; then
-#     DEFAULT_PREFIX="${STEAM_COMPAT_CLIENT_INSTALL_PATH}/compatibilitytools.d/GE-Proton${GE_PROTON_VERSION}/files/share/default_pfx"
-#     cp -r "${DEFAULT_PREFIX}/." "$ARK_PREFIX/" || {
-#         echo -e "${RED}Error copying default_pfx!${RESET}"
-#         exit 1
-#     }
-# fi
 
 
 
@@ -273,17 +248,5 @@ echo "${LAUNCH_COMMAND}"
 echo "$(timestamp) INFO: Starting ARK:SA..."
 "${STEAM_PATH}/compatibilitytools.d/GE-Proton${GE_PROTON_VERSION}/proton" run "${ARK_PATH}/ShooterGame/Binaries/Win64/ArkAscendedServer.exe" $LAUNCH_COMMAND &
 
-
-# echo "${STEAM_PATH}/compatibilitytools.d/GE-Proton${GE_PROTON_VERSION}/proton" run "${ARK_PATH}/ShooterGame/Binaries/Win64/ArkAscendedServer.exe" "${ARK_SERVER_MAP}${SERVER_PARAMS}" ${SERVER_OPTS}
-# "${STEAM_PATH}/compatibilitytools.d/GE-Proton${GE_PROTON_VERSION}/proton" run "${ARK_PATH}/ShooterGame/Binaries/Win64/ArkAscendedServer.exe" "${ARK_SERVER_MAP}${SERVER_PARAMS}" ${SERVER_OPTS}
-
-# /home/steam/Steam/compatibilitytools.d/GE-Proton10-29/proton run /home/steam/ark/ShooterGame/Binaries/Win64/ArkAscendedServer.exe TheIsland_WP?listen?serverPVE -clusterid=JumpySloths -ClusterDirOverride=/mnt/cluster -ForceAllowCaveFlyers -GBUsageToForceRestart=22 -forceuseperfthreads -ServerUseEventColors -NoBattleEye
-
 asa_pid=$!
 wait "$asa_pid"
-
-# reverent_chebyshev
-# 172.17.0.2
-# pidof ptyhon3
-# ls -lah ark/ShooterGame/Saved/Logs
-# cat ark/ShooterGame/Saved/Logs/ShooterGame.log

@@ -3,7 +3,7 @@
 
 download_mods() {
   local ARK_ROOT="$1"
-  local MOD_ROOT="${ARK_ROOT}/ShooterGame/Mods"
+  local MOD_ROOT="${ARK_ROOT}/ShooterGame/Binaries/Win64/ShooterGame/Mods"
   export ARK_MODS_UPDATED=false
 
   if [ -z "${ARK_MOD_IDS:-}" ]; then
