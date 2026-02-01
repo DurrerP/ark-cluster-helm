@@ -1,7 +1,7 @@
 {{- define "ark.helpers.probes" -}}
 probes:
   liveness:
-    enabled: true
+    enabled: false
     custom: false
     type: TCP
     spec:
@@ -10,7 +10,7 @@ probes:
       timeoutSeconds: 1
       failureThreshold: 3
   readiness:
-    enabled: true
+    enabled: false
     custom: false
     type: TCP
     spec:
@@ -19,7 +19,7 @@ probes:
       timeoutSeconds: 1
       failureThreshold: 3
   startup:
-    enabled: true
+    enabled: false
     custom: false
     type: TCP
     spec:

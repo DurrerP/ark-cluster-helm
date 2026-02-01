@@ -43,7 +43,6 @@ controllers:
               name: ark-cluster-secrets
 
         {{- include "ark.helpers.probes" . | nindent 8 }}
-
         {{- include "ark.helpers.securityContextUser" . | nindent 8 }}
         
 
