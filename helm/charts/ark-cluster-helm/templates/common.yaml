@@ -15,7 +15,6 @@ global:
 
 {{- include "app.svc" . }}
 
-{{- include "app.rbacs" . }}
 
 serviceAccount:
   ark:
