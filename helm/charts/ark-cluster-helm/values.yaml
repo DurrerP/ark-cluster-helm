@@ -1,0 +1,171 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/app-template-4.6.2/charts/other/app-template/values.schema.json
+
+# you can add any value from the helm library chart you want to override
+# https://github.com/bjw-s-labs/helm-charts/blob/main/charts/library/common/values.yaml
+# do with caution
+
+
+# ToDo
+
+  # Maybe needed
+  # ?AltSaveDirectoryName=<savedir_name>
+  # -clusterid=<CLUSTER_NAME>
+  # -ClusterDirOverride=<PATH>
+
+
+global:
+  timezone: "UTC"
+
+# Example override in the library chart for a global nodeSelector
+# defaultPodOptions:
+#   nodeSelector:
+#     kubernetes.io/hostname: "nodename"
+
+
+arkClusterHelm:
+  ###
+  # Serverconfig + Maps
+  ###
+
+  # will spawn an sts per map
+  servers:
+    imageTag: v0.0.1
+    imageRepo: "ghcr.io/durrerp/ark-cluster-helm"
+    maps:
+      - "LostColony_WP"
+      - "Ragnarok_WP"
+    persistence:
+      size: 10Gi # PVC for the "Saved" folder
+      storageClass: node3-local
+      accessMode: ReadWriteOnce
+      persist: false
+    gamePortStart: 7777
+    rconPortStart: 27015
+    resources:
+      requests:
+        cpu: 2.0
+        memory: 10Gi
+
+  ##
+  # Loadbalancers
+  ##
+
+  service:
+    annotations: []
+
+  ##
+  # Storage
+  ##
+
+  # will create 2 PVCs for ark A and ark B installation
+  serverStorage:
+    enabled: true
+    storageClass: node3-local # define storage class here
+    accessMode: ReadWriteOnce
+    size: 50Gi
+    retain: false
+  # will create a single PVC for cluster shared storage
+  clusterStorage:
+    enabled: true
+    storageClass: node3-local # define storage class here
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    retain: false
+
+  ##
+  # Configmaps
+  ##
+
+  configMaps:
+    arkGlobalSettings:
+      enabled: true
+      labels: {}
+      annotations: {}
+
+      clusterID: "clusterId"
+      maxPlayers: 70
+      mods: # list of curseforge Project IDs
+        - "123456"
+        - "654321"
+      serverOpts: # - options
+        - "ForceAllowCaveFlyers"
+        - "GBUsageToForceRestart=20"
+        - "forceuseperfthreads"
+        - "ServerUseEventColors"
+        - "NoBattleEye"
+      serverParams: [] # ? options
+      sessionName: "{cluster_id} ASA - {map_name}" # supports currently {cluster_id} and {map_name}
+    
+    arkGlobalConfigfiles:
+      enabled: true
+      labels: {}
+      annotations: {}
+
+      data:
+        Game.ini : |
+          [/script/shootergame.shootergamemode]
+          MaxDifficulty=True
+          PoopIntervalMultiplier=100.0
+        GameUserSettings.ini : |
+          [ServerSettings]
+          DifficultyOffset=5.0
+          OverrideOfficialDifficulty=5.0
+
+    arkClusterState:
+      enabled: true # disable if using gitOps and create manually
+      labels: {}
+      annotations: {}
+
+      data:
+        ARK_ACTIVE_PVC: "arkA" #  "arkB"
+        ARK_INITIALIZED_TIME: timestamp
+        ARK_LAST_UPDATETIME: timestamp
+        
+
+###
+# Loadbalancer
+###
+
+
+
+##
+# Secret
+##
+secrets:
+  arkClusterSecrets:
+    enabled: true
+    forceRename: ark-cluster-secrets
+    labels: {}
+    annotations: {}
+    stringData:
+      ARK_SERVER_ADMIN_PASSWORD: password
+      ARK_SERVER_JOIN_PASSWORD: password
+      ARK_CURSEFORGE_API_KEY: api-key # (for downloading mods)
+
+
+rbac:
+  roles:
+    role1:
+      enabled: true
+      type: Role
+      rules:
+        - apiGroups: [""]
+          resources: ["configmaps"]
+          verbs: ["get", "patch"]
+        - apiGroups: ["apps"]
+          resources: ["statefulsets"]
+          verbs: ["get", "list", "watch", "patch"]
+        - apiGroups: [""]
+          resources: ["pods"]
+          verbs: ["get", "list", "watch"]
+
+  bindings:
+    role2:
+      enabled: true
+      type: RoleBinding
+      roleRef:
+        identifier: role1
+      subjects:
+        - kind: ServiceAccount
+          name: "ark-sa"
+          namespace: "{{ .Release.Namespace }}"

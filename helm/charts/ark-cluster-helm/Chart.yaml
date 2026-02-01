@@ -1,0 +1,14 @@
+apiVersion: v2
+name: ark-cluster-helm
+description: A chart for deploying an ARK Survival Ascended cluster
+version: 0.0.4
+appVersion: "v0.0.1"
+maintainers:
+  - name: DurrerP
+dependencies:
+  - name: common
+    repository: https://bjw-s-labs.github.io/helm-charts
+    version: 4.6.2
+sources:
+  - https://github.com/DurrerP/ark-cluster-helm
+  - https://github.com/bjw-s-labs/helm-charts

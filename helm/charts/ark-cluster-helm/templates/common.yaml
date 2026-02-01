@@ -1,0 +1,29 @@
+{{- include "bjw-s.common.loader.init" . }}
+
+{{/* Add hardcoded defaults here */}}
+{{- define "app-template.hardcodedValues" -}}
+{{ if not .Values.global.nameOverride }}
+global:
+  nameOverride: "{{ .Release.Name }}"
+{{ end }}
+
+{{- include "app.pvcs" . }}
+
+{{- include "app.configsave" . }}
+
+{{- include "app.controllers" . }}
+
+{{- include "app.svc" . }}
+
+
+serviceAccount:
+  ark:
+    enabled: true
+    forceRename: "ark-sa"
+
+{{- end }}
+{{/* end of hardcoded defaults */}}
+
+{{- $_ := mergeOverwrite .Values (include "app-template.hardcodedValues" . | fromYaml) -}}
+{{/* Render the templates */}}
+{{ include "bjw-s.common.loader.generate" . }}
