@@ -3,7 +3,7 @@
 
 controllers:
   
-  init_job:
+  initJob:
     enabled: true
     type: job
     annotations: {}
@@ -19,7 +19,7 @@ controllers:
 
     containers:
       initJob:
-        nameOverride: "ark_init_job"
+        nameOverride: "ark-init-job"
 
         image:
           repository: {{ .Values.arkClusterHelm.servers.imageRepo }}
@@ -52,7 +52,7 @@ controllers:
         configMap:
           name: ark-global-configfiles
 
-  update_job:
+  updateJob:
     enabled: true
     type: cronjob
     annotations: {}
@@ -76,7 +76,7 @@ controllers:
 
     containers:
       updateJob:
-        nameOverride: "ark_update_job"
+        nameOverride: "ark-update-job"
 
         image:
           repository: {{ .Values.arkClusterHelm.servers.imageRepo }}
@@ -126,7 +126,7 @@ controllers:
 
     statefulset:
       volumeClaimTemplates: 
-      - name: serverPVC
+      - name: serverpvc
         labels: {}
         annotations: {}
         globalMounts:

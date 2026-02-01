@@ -4,7 +4,7 @@
 persistence:
 
 {{- range tuple "arkA" "arkB" }}
-  {{ . }}:
+  {{ lower . }}:
     enabled: {{ $root.Values.arkClusterHelm.serverStorage.enabled }}
     type: persistentVolumeClaim
     suffix: pvc
@@ -13,11 +13,11 @@ persistence:
     size: {{ $root.Values.arkClusterHelm.serverStorage.size }}
     retain: {{ $root.Values.arkClusterHelm.serverStorage.retain }}
     advancedMounts:
-      init_job:
+      initJob:
         initJob:
           - path: "/mnt/{{ . }}"
             readonly: false
-      update_job:
+      updateJob:
         updateJob:
           - path: "/mnt/{{ . }}"
             readonly: false
@@ -44,7 +44,7 @@ persistence:
     globalMounts:
       - path: "/mnt/cluster"
 
-  clusterState:
+  clusterstate:
     enabled: true
     type: configMap
     name: "ark-global-configfiles"

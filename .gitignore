@@ -4,3 +4,5 @@ helm/charts/ark-cluster-helm/Chart.lock
 
 #other stuff
 helperScripts/secret.sh
+
+ark-cluster-helm-*.tgz
